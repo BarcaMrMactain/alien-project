@@ -1,69 +1,212 @@
-import Image from "next/image";
+"use client";
+
+import ContactModal from "@/components/ContactModal";
+import { useState } from "react";
+import IntroModal from "@/components/IntroModal";
+import ContentModal from "@/components/ContentModal";
+import type { Content } from "@/types/content";
 
 export default function Home() {
+  const [showIntro, setShowIntro] = useState(true);
+
+  const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+
+  const [hasOpenedContentModal, setHasOpenedContentModal] = useState(false);
+
+  const [showContact, setShowContact] = useState(false);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [showClosedText, setShowClosedText] = useState(false);
+
+  function closeIntro() {
+    setShowIntro(false);
+
+    setTimeout(() => {
+      setShowClosedText(true);
+    }, 50);
+  }
+
+  async function openContent(id: number) {
+    try {
+      setShowContact(false);
+      setShowClosedText(false);
+
+      const response = await fetch(`/api/content/${id}`);
+
+      if (!response.ok) {
+        throw new Error("Kunne ikke hente content");
+      }
+
+      const data: Content = await response.json();
+
+      setSelectedContent(data);
+
+      if (!hasOpenedContentModal) {
+        setHasOpenedContentModal(true);
+      }
+    } catch (error) {
+      console.error("Fejl ved hentning af content:", error);
+    }
+  }
+
+  function closeContent() {
+    setSelectedContent(null);
+
+    setTimeout(() => {
+      setShowClosedText(true);
+    }, 50);
+  }
+
+  function closeContact() {
+    setShowContact(false);
+
+    setTimeout(() => {
+      setShowClosedText(true);
+    }, 50);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main
+      className="min-h-screen bg-cover bg-center bg-no-repeat text-white"
+      style={{
+        backgroundImage: "url('/images/alien_bg_red.jpg')",
+      }}
+    >
+      {showIntro && <IntroModal onClose={closeIntro} />}
+
+      {selectedContent && (
+        <ContentModal
+          data={selectedContent}
+          onClose={closeContent}
+          isFirstOpen={!hasOpenedContentModal}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      {showContact && <ContactModal onClose={closeContact} />}
+
+      <div className="min-h-screen bg-black/30">
+        <header className="relative z-50 flex items-center gap-8 px-6 py-6 md:px-8">
+          <h1 className="text-2xl font-bold tracking-[0.3em]">ALIEN</h1>
+
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="text-3xl md:hidden"
+            aria-label="Open navigation"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            ☰
+          </button>
+
+          <nav
+            className={`
+      absolute left-0 top-full z-30 w-full bg-black/95
+      px-6 py-6
+      md:static md:w-auto md:bg-transparent md:p-0
+      ${menuOpen ? "block" : "hidden md:block"}
+    `}
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <ul className="flex flex-col gap-3 text-[16px] uppercase md:flex-row md:gap-2 md:text-[25px]">
+              <li>
+                <button
+                  onClick={() => {
+                    openContent(1);
+                    setMenuOpen(false);
+                  }}
+                  className={`px-4 py-2 transition ${
+                    selectedContent?.id === 1
+                      ? "bg-[#BF532C] text-black"
+                      : "bg-black text-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  Beyond
+                </button>
+              </li>
+
+              <li>
+                <button
+                  onClick={() => {
+                    openContent(2);
+                    setMenuOpen(false);
+                  }}
+                  className={`px-4 py-2 transition ${
+                    selectedContent?.id === 2
+                      ? "bg-[#BF532C] text-black"
+                      : "bg-black text-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  Story
+                </button>
+              </li>
+
+              <li>
+                <button
+                  onClick={() => {
+                    openContent(3);
+                    setMenuOpen(false);
+                  }}
+                  className={`px-4 py-2 transition ${
+                    selectedContent?.id === 3
+                      ? "bg-[#BF532C] text-black"
+                      : "bg-black text-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  Alien
+                </button>
+              </li>
+
+              <li>
+                <button
+                  onClick={() => {
+                    openContent(4);
+                    setMenuOpen(false);
+                  }}
+                  className={`px-4 py-2 transition ${
+                    selectedContent?.id === 4
+                      ? "bg-[#BF532C] text-black"
+                      : "bg-black text-white hover:bg-white hover:text-black"
+                  }`}
+                >
+                  Universe
+                </button>
+              </li>
+
+              <button
+                onClick={() => {
+                  setSelectedContent(null);
+                  setShowClosedText(false);
+                  setShowContact(true);
+                  setMenuOpen(false);
+                }}
+                className={`fixed bottom-0 right-0 z-50 px-6 py-3 text-lg uppercase transition md:text-xl ${
+                  showContact
+                    ? "bg-[#BF532C] text-black"
+                    : "bg-black text-white hover:bg-white hover:text-black"
+                }`}
+              >
+                Contact
+              </button>
+            </ul>
+          </nav>
+        </header>
+
+        <section className="flex min-h-[80vh] items-center justify-center px-6">
+          {!showIntro && (
+            <div
+              className={`transition-opacity duration-2000 ${
+                showClosedText ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <p className="text-xs uppercase tracking-[0.35em] text-white/70 md:text-sm md:tracking-[0.5em]">
+                Modal closed.
+              </p>
+
+              <h2 className="mt-4 text-4xl font-bold uppercase sm:text-5xl md:text-7xl">
+                The Alien Stays...
+              </h2>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
